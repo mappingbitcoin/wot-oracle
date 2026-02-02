@@ -10,13 +10,13 @@ services:
     volumes:
       - wot-data:/app/data
     environment:
-      - RELAYS=${RELAYS:-wss://relay.damus.io,wss://nos.lol,wss://relay.nostr.band}
+      - RELAYS=${RELAYS:-wss://relay.mappingbitcoin.com,wss://relay.damus.io,wss://nos.lol,wss://relay.nostr.band}
       - HTTP_PORT=8080
       - DB_PATH=/app/data/wot.db
       - DVM_ENABLED=${DVM_ENABLED:-false}
       - DVM_PRIVATE_KEY=${DVM_PRIVATE_KEY:-}
       - RATE_LIMIT_PER_MINUTE=${RATE_LIMIT_PER_MINUTE:-100}
-      - MAX_HOPS=${MAX_HOPS:-5}
+      - MAX_HOPS=${MAX_HOPS:-3}
       - RUST_LOG=${RUST_LOG:-info}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]

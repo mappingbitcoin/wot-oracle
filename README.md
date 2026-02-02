@@ -14,7 +14,7 @@ WoT Oracle continuously syncs follow lists (kind:3 events) from Nostr relays and
 
 ```bash
 # Clone and start
-git clone https://github.com/yourusername/wot-oracle.git
+git clone https://github.com/mappingbitcoin/wot-oracle.git
 cd wot-oracle
 docker-compose up -d
 
@@ -32,7 +32,7 @@ cargo build --release
 ./target/release/wot-oracle
 
 # Or with custom relays
-RELAYS=wss://relay.damus.io,wss://nos.lol ./target/release/wot-oracle
+RELAYS=wss://relay.mappingbitcoin.com,wss://relay.damus.io,wss://nos.lol ./target/release/wot-oracle
 ```
 
 ## API Usage

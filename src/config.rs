@@ -43,7 +43,7 @@ impl Config {
         let max_hops = env::var("MAX_HOPS")
             .ok()
             .and_then(|h| h.parse().ok())
-            .unwrap_or(5);
+            .unwrap_or(3);
 
         let cache_size = env::var("CACHE_SIZE")
             .ok()

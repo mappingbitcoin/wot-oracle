@@ -34,7 +34,7 @@ A global follow-graph indexer that answers pairwise distance queries between any
 |-----------|------|----------|---------|-------------|
 | `from` | hex pubkey | Yes | - | The observer/viewer pubkey |
 | `to` | hex pubkey | Yes | - | The target pubkey |
-| `max_hops` | integer | No | 5 | Maximum depth to search (1-10) |
+| `max_hops` | integer | No | 3 | Maximum depth to search (1-10) |
 | `include_bridges` | boolean | No | false | Return intermediate pubkeys |
 | `bypass_cache` | boolean | No | false | Skip cache, force fresh computation |
 
@@ -95,7 +95,7 @@ A global follow-graph indexer that answers pairwise distance queries between any
   "tags": [
     ["i", "<from_pubkey>", "text"],
     ["param", "target", "<to_pubkey>"],
-    ["param", "max_hops", "5"]
+    ["param", "max_hops", "3"]
   ],
   "content": ""
 }

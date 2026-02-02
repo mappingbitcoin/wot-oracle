@@ -13,7 +13,7 @@ This guide covers deploying WoT Oracle using Docker.
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/wot-oracle.git
+git clone https://github.com/mappingbitcoin/wot-oracle.git
 cd wot-oracle
 
 # Copy example environment file
@@ -35,7 +35,7 @@ Edit `.env` or pass environment variables to docker-compose:
 
 ```bash
 # .env file
-RELAYS=wss://relay.damus.io,wss://nos.lol,wss://relay.nostr.band
+RELAYS=wss://relay.mappingbitcoin.com,wss://relay.damus.io,wss://nos.lol,wss://relay.nostr.band
 HTTP_PORT=8080
 RATE_LIMIT_PER_MINUTE=100
 CACHE_SIZE=10000
