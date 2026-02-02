@@ -40,10 +40,12 @@ impl PubkeyInterner {
     }
 
     /// Number of unique strings interned
+    #[allow(dead_code)] // Public API for memory diagnostics
     pub fn len(&self) -> usize {
         self.interned.len()
     }
 
+    #[allow(dead_code)] // Required by clippy when len() exists
     pub fn is_empty(&self) -> bool {
         self.interned.is_empty()
     }

@@ -172,6 +172,7 @@ pub fn compute_distance(graph: &WotGraph, query: &DistanceQuery) -> DistanceResu
     })
 }
 
+#[allow(clippy::too_many_arguments)] // BFS state is intentionally flat for performance
 fn bidirectional_bfs(
     state: &mut BfsState,
     follows: &[Vec<u32>],

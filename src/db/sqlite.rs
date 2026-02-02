@@ -19,6 +19,7 @@ pub struct FollowUpdateBatch<'a> {
 }
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)] // Public API for sync state inspection
 pub struct SyncState {
     pub relay_url: String,
     pub last_event_time: Option<i64>,
@@ -143,6 +144,7 @@ impl Database {
         Ok(())
     }
 
+    #[allow(dead_code)] // Public API for direct node manipulation
     pub fn upsert_node(
         &self,
         pubkey: &str,
@@ -173,6 +175,7 @@ impl Database {
         Ok(id)
     }
 
+    #[allow(dead_code)] // Public API for direct follow list updates
     pub fn update_follows(&self, follower_pubkey: &str, follows: &[String], event_id: Option<&str>, created_at: Option<i64>) -> Result<()> {
         if follows.is_empty() {
             // Just update the node, clear edges
@@ -382,6 +385,7 @@ impl Database {
         Ok(success_count)
     }
 
+    #[allow(dead_code)] // Public API for sync state inspection
     pub fn get_sync_state(&self, relay_url: &str) -> Result<Option<SyncState>> {
         let conn = self.conn.lock().unwrap();
 
@@ -404,6 +408,7 @@ impl Database {
         }
     }
 
+    #[allow(dead_code)] // Public API for sync state management
     pub fn set_sync_state(&self, relay_url: &str, last_event_time: Option<i64>) -> Result<()> {
         let conn = self.conn.lock().unwrap();
         let now = chrono::Utc::now().timestamp();
@@ -422,6 +427,7 @@ impl Database {
         Ok(())
     }
 
+    #[allow(dead_code)] // Public API for database statistics
     pub fn get_stats(&self) -> Result<(usize, usize)> {
         let conn = self.conn.lock().unwrap();
 

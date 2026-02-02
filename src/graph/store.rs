@@ -8,6 +8,7 @@ use super::metrics::{LockMetrics, LockMetricsSnapshot, LockTimer};
 /// Node metadata (pubkey is stored separately via interner)
 #[derive(Debug, Clone)]
 pub struct NodeInfo {
+    #[allow(dead_code)] // Stored for event provenance/debugging
     pub kind3_event_id: Option<String>,
     pub kind3_created_at: Option<i64>,
 }
@@ -191,6 +192,7 @@ impl WotGraph {
         true
     }
 
+    #[allow(dead_code)] // Public API for graph inspection
     pub fn get_follows(&self, pubkey: &str) -> Option<Vec<String>> {
         let node_id = self.get_node_id(pubkey)?;
         let follows = self.follows.read();
@@ -204,6 +206,7 @@ impl WotGraph {
         })
     }
 
+    #[allow(dead_code)] // Public API for graph inspection
     pub fn get_followers(&self, pubkey: &str) -> Option<Vec<String>> {
         let node_id = self.get_node_id(pubkey)?;
         let followers = self.followers.read();
@@ -237,6 +240,7 @@ impl WotGraph {
             .collect()
     }
 
+    #[allow(dead_code)] // Public API for node metadata inspection
     pub fn get_node_info(&self, pubkey: &str) -> Option<NodeInfo> {
         let node_id = self.get_node_id(pubkey)?;
         let node_info = self.node_info.read();
@@ -264,6 +268,7 @@ impl WotGraph {
     }
 
     /// Reset lock metrics (useful after warmup period)
+    #[allow(dead_code)] // Public API for metrics management
     pub fn reset_lock_metrics(&self) {
         self.lock_metrics.reset();
     }

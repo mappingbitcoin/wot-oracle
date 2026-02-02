@@ -20,6 +20,7 @@ use crate::graph::{bfs, LockMetricsSnapshot, WotGraph};
 #[derive(Clone)]
 pub struct AppState {
     pub graph: Arc<WotGraph>,
+    #[allow(dead_code)] // Reserved for future config-based features (e.g., dynamic max_hops)
     pub config: Arc<Config>,
     pub cache: Arc<QueryCache>,
 }

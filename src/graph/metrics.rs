@@ -64,6 +64,7 @@ impl LockMetrics {
         }
     }
 
+    #[allow(dead_code)] // Public API for metrics management after warmup
     pub fn reset(&self) {
         self.write_lock_count.store(0, Ordering::Relaxed);
         self.write_lock_total_ns.store(0, Ordering::Relaxed);

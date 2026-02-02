@@ -4,7 +4,10 @@ use std::time::Duration;
 use crate::graph::bfs::DistanceResult;
 use crate::graph::WotGraph;
 
+// Default values for cache configuration (used by with_defaults())
+#[allow(dead_code)] // Used by with_defaults() for standalone/testing scenarios
 const DEFAULT_CACHE_SIZE: usize = 10000;
+#[allow(dead_code)] // Used by with_defaults() for standalone/testing scenarios
 const DEFAULT_TTL_SECS: u64 = 300; // 5 minutes
 
 /// Compact cache key using node IDs instead of string pubkeys.
@@ -89,6 +92,7 @@ impl QueryCache {
         Self { entries, ttl_secs }
     }
 
+    #[allow(dead_code)] // Public API for standalone usage without config
     pub fn with_defaults() -> Self {
         Self::new(DEFAULT_CACHE_SIZE, DEFAULT_TTL_SECS)
     }
@@ -109,6 +113,7 @@ impl QueryCache {
     }
 
     /// Invalidate all entries. Useful when graph is updated.
+    #[allow(dead_code)] // Public API for cache management
     pub fn invalidate_all(&self) {
         self.entries.invalidate_all();
     }
