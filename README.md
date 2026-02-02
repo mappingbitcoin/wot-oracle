@@ -1,0 +1,101 @@
+# WoT Oracle
+
+A high-performance Nostr Web of Trust oracle that indexes the global follow graph and provides pairwise distance queries between pubkeys.
+
+## What It Does
+
+WoT Oracle continuously syncs follow lists (kind:3 events) from Nostr relays and builds an in-memory graph. You can then query the "social distance" between any two pubkeys - how many hops through the follow graph connect them.
+
+**Example:** If Alice follows Bob, and Bob follows Carol, then the distance from Alice to Carol is 2 hops.
+
+## Quick Start
+
+### Using Docker (Recommended)
+
+```bash
+# Clone and start
+git clone https://github.com/yourusername/wot-oracle.git
+cd wot-oracle
+docker-compose up -d
+
+# Check health
+curl http://localhost:8080/health
+```
+
+### Building from Source
+
+```bash
+# Requires Rust 1.75+
+cargo build --release
+
+# Run with default settings
+./target/release/wot-oracle
+
+# Or with custom relays
+RELAYS=wss://relay.damus.io,wss://nos.lol ./target/release/wot-oracle
+```
+
+## API Usage
+
+### Get Distance Between Two Pubkeys
+
+```bash
+curl "http://localhost:8080/distance?from=PUBKEY1&to=PUBKEY2"
+```
+
+Response:
+```json
+{
+  "from": "abc123...",
+  "to": "def456...",
+  "hops": 2,
+  "path_count": 3,
+  "mutual_follow": false,
+  "bridges": ["bridge1...", "bridge2..."]
+}
+```
+
+### Batch Query
+
+```bash
+curl -X POST http://localhost:8080/distance/batch \
+  -H "Content-Type: application/json" \
+  -d '{"from": "PUBKEY1", "targets": ["PUBKEY2", "PUBKEY3"]}'
+```
+
+### Graph Stats
+
+```bash
+curl http://localhost:8080/stats
+```
+
+## Configuration
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `RELAYS` | damus, nos.lol, nostr.band | Comma-separated relay URLs |
+| `HTTP_PORT` | 8080 | HTTP server port |
+| `DB_PATH` | wot.db | SQLite database path |
+| `RATE_LIMIT_PER_MINUTE` | 100 | Per-IP rate limit |
+| `CACHE_SIZE` | 10000 | LRU cache entries |
+| `CACHE_TTL_SECS` | 300 | Cache TTL (5 min) |
+
+See [.env.example](.env.example) for all options.
+
+## Documentation
+
+- [API Reference](docs/API.md) - Full REST API documentation
+- [DVM Interface](docs/DVM.md) - NIP-90 Nostr integration
+- [Self-Hosting Guide](docs/SELF-HOST.md) - Docker deployment guide
+- [Architecture](docs/ARCHITECTURE.md) - How it works internally
+
+## Performance
+
+- **BFS Algorithm:** Bidirectional breadth-first search with O(b^(d/2)) complexity
+- **Memory:** ~100 bytes per node, ~8 bytes per edge
+- **Latency:** Sub-millisecond for cached queries, <50ms for uncached
+- **Throughput:** 10,000+ queries/second on modern hardware
+
+## License
+
+MIT

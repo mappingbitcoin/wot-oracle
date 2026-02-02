@@ -1,0 +1,74 @@
+# Rust build artifacts
+/target/
+Cargo.lock
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Database files
+*.db
+*.db-shm
+*.db-wal
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# ------------------------------------------------------------------------------
+# AI Coding Assistants & Agents
+# ------------------------------------------------------------------------------
+
+# Claude Code
+.claude/
+.claudeignore
+CLAUDE.md
+claude.json
+.claude.json
+
+# Cursor
+.cursor/
+.cursorignore
+.cursorindexingignore
+.cursorrules
+
+# Cline
+.cline/
+.clineignore
+
+# JetBrains AI
+.aiignore
+
+# Windsurf
+.windsurf/
+.windsurfrules
+
+# Zed (AI extensions/agents)
+.zed/
+.zedignore
+
+# Generic / other AI agents
+.ai/
+.aiignore
+.aider/
+.aiderrules
+
+# GitHub Copilot / VSCode AI (workspace configs)
+.vscode/copilot-*.json
+.copilot/
+
+# Common AI rules / memory files
+*.rules.md
+.ai-rules/
+
