@@ -1,7 +1,7 @@
 # WoT Oracle
 
-[![Build](https://github.com/mappingbitcoin/wot-oracle/actions/workflows/ci.yml/badge.svg)](https://github.com/mappingbitcoin/wot-oracle/actions/workflows/ci.yml)
-[![Tests](https://github.com/mappingbitcoin/wot-oracle/actions/workflows/ci.yml/badge.svg?event=push)](https://github.com/mappingbitcoin/wot-oracle/actions/workflows/ci.yml)
+[![Build](https://github.com/mappingbitcoin/wot-oracle/actions/workflows/ci.yml/badge.svg?job=build)](https://github.com/mappingbitcoin/wot-oracle/actions/workflows/ci.yml)
+[![Tests](https://github.com/mappingbitcoin/wot-oracle/actions/workflows/ci.yml/badge.svg?job=test)](https://github.com/mappingbitcoin/wot-oracle/actions/workflows/ci.yml)
 [![Coverage](https://codecov.io/gh/mappingbitcoin/wot-oracle/branch/main/graph/badge.svg)](https://codecov.io/gh/mappingbitcoin/wot-oracle)
 
 A high-performance Nostr Web of Trust oracle that indexes the global follow graph and provides pairwise distance queries between pubkeys.
