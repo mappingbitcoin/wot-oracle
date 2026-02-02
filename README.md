@@ -10,7 +10,18 @@ WoT Oracle continuously syncs follow lists (kind:3 events) from Nostr relays and
 
 ## Quick Start
 
-### Using Docker (Recommended)
+### Using Pre-built Docker Image (Recommended)
+
+```bash
+# Pull and run
+docker pull ghcr.io/mappingbitcoin/wot-oracle:v1.0.0
+docker run -d -p 8080:8080 -v wot-data:/app/data ghcr.io/mappingbitcoin/wot-oracle:v1.0.0
+
+# Check health
+curl http://localhost:8080/health
+```
+
+### Using Docker Compose
 
 ```bash
 # Clone and start

@@ -11,6 +11,35 @@ This guide covers deploying WoT Oracle using Docker.
 
 ## Quick Start
 
+### Option 1: Pre-built Image (Recommended)
+
+```bash
+# Pull from GitHub Container Registry
+docker pull ghcr.io/mappingbitcoin/wot-oracle:v1.0.0
+
+# Run with default settings
+docker run -d \
+  --name wot-oracle \
+  -p 8080:8080 \
+  -v wot-data:/app/data \
+  ghcr.io/mappingbitcoin/wot-oracle:v1.0.0
+
+# Run with custom configuration
+docker run -d \
+  --name wot-oracle \
+  -p 8080:8080 \
+  -v wot-data:/app/data \
+  -e RELAYS=wss://relay.mappingbitcoin.com,wss://relay.damus.io \
+  -e CACHE_SIZE=20000 \
+  -e RUST_LOG=debug \
+  ghcr.io/mappingbitcoin/wot-oracle:v1.0.0
+
+# Verify it's running
+curl http://localhost:8080/health
+```
+
+### Option 2: Docker Compose
+
 ```bash
 # Clone the repository
 git clone https://github.com/mappingbitcoin/wot-oracle.git
@@ -67,7 +96,9 @@ version: '3.8'
 
 services:
   wot-oracle:
-    build: .
+    image: ghcr.io/mappingbitcoin/wot-oracle:v1.0.0
+    # Or build from source:
+    # build: .
     container_name: wot-oracle
     restart: unless-stopped
     ports:

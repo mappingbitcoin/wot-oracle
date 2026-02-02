@@ -2,7 +2,9 @@ version: '3.8'
 
 services:
   wot-oracle:
-    build: .
+    image: ghcr.io/mappingbitcoin/wot-oracle:v1.0.0
+    # Or build from source:
+    # build: .
     container_name: wot-oracle
     restart: unless-stopped
     ports:
