@@ -15,24 +15,24 @@ This guide covers deploying WoT Oracle using Docker.
 
 ```bash
 # Pull from GitHub Container Registry
-docker pull ghcr.io/mappingbitcoin/wot-oracle:v1.0.0
+docker pull ghcr.io/nostr-wot/nostr-wot-oracle:0.2.0
 
 # Run with default settings
 docker run -d \
   --name wot-oracle \
   -p 8080:8080 \
   -v wot-data:/app/data \
-  ghcr.io/mappingbitcoin/wot-oracle:v1.0.0
+  ghcr.io/nostr-wot/nostr-wot-oracle:0.2.0
 
 # Run with custom configuration
 docker run -d \
   --name wot-oracle \
   -p 8080:8080 \
   -v wot-data:/app/data \
-  -e RELAYS=wss://relay.mappingbitcoin.com,wss://relay.damus.io \
+  -e RELAYS=wss://relay.mappingbitcoin.com,wss://relay.damus.io,wss://nos.lol,wss://relay.nostr.band \
   -e CACHE_SIZE=20000 \
   -e RUST_LOG=debug \
-  ghcr.io/mappingbitcoin/wot-oracle:v1.0.0
+  ghcr.io/nostr-wot/nostr-wot-oracle:0.2.0
 
 # Verify it's running
 curl http://localhost:8080/health
@@ -42,8 +42,8 @@ curl http://localhost:8080/health
 
 ```bash
 # Clone the repository
-git clone https://github.com/mappingbitcoin/wot-oracle.git
-cd wot-oracle
+git clone https://github.com/nostr-wot/nostr-wot-oracle.git
+cd nostr-wot-oracle
 
 # Copy example environment file
 cp .env.example .env
@@ -96,7 +96,7 @@ version: '3.8'
 
 services:
   wot-oracle:
-    image: ghcr.io/mappingbitcoin/wot-oracle:v1.0.0
+    image: ghcr.io/nostr-wot/nostr-wot-oracle:0.2.0
     # Or build from source:
     # build: .
     container_name: wot-oracle

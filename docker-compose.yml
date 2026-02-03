@@ -1,16 +1,16 @@
 version: '3.8'
 
 services:
-  wot-oracle:
-    image: ghcr.io/mappingbitcoin/wot-oracle:v1.0.0
+  nostr-wot-oracle:
+    image: ghcr.io/nostr-wot/nostr-wot-oracle:0.2.0
     # Or build from source:
     # build: .
-    container_name: wot-oracle
+    container_name: nostr-wot-oracle
     restart: unless-stopped
     ports:
       - "${HTTP_PORT:-8080}:8080"
     volumes:
-      - wot-data:/app/data
+      - nostr-wot-data:/app/data
     environment:
       - RELAYS=${RELAYS:-wss://relay.mappingbitcoin.com,wss://relay.damus.io,wss://nos.lol,wss://relay.nostr.band}
       - HTTP_PORT=8080
@@ -28,4 +28,4 @@ services:
       start_period: 60s
 
 volumes:
-  wot-data:
+  nostr-wot-data:
