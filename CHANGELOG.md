@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `GET /common-follows?from=xxx&to=yyy` - Returns array of pubkeys that both from and to follow (mutual follows)
 - `GET /path?from=xxx&to=yyy` - Returns array of pubkeys forming the shortest path between two pubkeys
 
-## [0.1.0] - Initial Release
+## [0.1.0] - Initial Release - 2026-02-02
 
 ### Added
 - Core Web of Trust graph indexing from Nostr relays
