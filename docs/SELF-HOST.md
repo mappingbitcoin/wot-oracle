@@ -15,14 +15,14 @@ This guide covers deploying WoT Oracle using Docker.
 
 ```bash
 # Pull from GitHub Container Registry
-docker pull ghcr.io/nostr-wot/nostr-wot-oracle:0.2.0
+docker pull ghcr.io/nostr-wot/nostr-wot-oracle:0.2.1
 
 # Run with default settings
 docker run -d \
   --name wot-oracle \
   -p 8080:8080 \
   -v wot-data:/app/data \
-  ghcr.io/nostr-wot/nostr-wot-oracle:0.2.0
+  ghcr.io/nostr-wot/nostr-wot-oracle:0.2.1
 
 # Run with custom configuration
 docker run -d \
@@ -32,7 +32,7 @@ docker run -d \
   -e RELAYS=wss://relay.mappingbitcoin.com,wss://relay.damus.io,wss://nos.lol,wss://relay.nostr.band \
   -e CACHE_SIZE=20000 \
   -e RUST_LOG=debug \
-  ghcr.io/nostr-wot/nostr-wot-oracle:0.2.0
+  ghcr.io/nostr-wot/nostr-wot-oracle:0.2.1
 
 # Verify it's running
 curl http://localhost:8080/health
@@ -96,7 +96,7 @@ version: '3.8'
 
 services:
   wot-oracle:
-    image: ghcr.io/nostr-wot/nostr-wot-oracle:0.2.0
+    image: ghcr.io/nostr-wot/nostr-wot-oracle:0.2.1
     # Or build from source:
     # build: .
     container_name: wot-oracle

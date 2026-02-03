@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2026-02-03
+
+### Security
+- **max_hops limit reduced** from 10 to 5 (default: 3) to prevent CPU exhaustion attacks
+- **Bounded configuration values** - CACHE_SIZE (100-100,000), RATE_LIMIT (1-1000), CACHE_TTL (10-3600s)
+- **Request body size limit** - 1MB limit to prevent memory exhaustion
+- **DVM max_hops validation** - Now properly validates and clamps values (was silently accepting any value)
+- **Less verbose error messages** - Pubkey validation errors no longer leak exact validation rules
+- **DVM response hardening** - Removed full request echo from responses
+
+### Changed
+- Default max_hops changed from 5 to 3
+- Maximum allowed max_hops changed from 10 to 5
+
 ## [0.2.0] - 2026-02-03
 
 ### Added

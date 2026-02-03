@@ -100,7 +100,7 @@ Use individual `param` tags for each value:
 | `i` (combined) | `["i", "from:to", "text"]` | Yes* | - | Single tag with colon-separated pubkeys |
 | `param` from | `["param", "from", "<pubkey>"]` | Yes* | - | Source pubkey |
 | `param` to | `["param", "to", "<pubkey>"]` | Yes* | - | Target pubkey |
-| `param` max_hops | `["param", "max_hops", "5"]` | No | 5 | Max search depth (1-10) |
+| `param` max_hops | `["param", "max_hops", "3"]` | No | 3 | Max search depth (1-5) |
 
 *Use one of: two `i` tags, combined `i` tag, or both `from`/`to` params.
 

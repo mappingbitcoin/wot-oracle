@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   nostr-wot-oracle:
-    image: ghcr.io/nostr-wot/nostr-wot-oracle:0.2.0
+    image: ghcr.io/nostr-wot/nostr-wot-oracle:0.2.1
     # Or build from source:
     # build: .
     container_name: nostr-wot-oracle

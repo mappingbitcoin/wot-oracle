@@ -14,7 +14,7 @@ Health check endpoint.
 ```json
 {
   "status": "healthy",
-  "version": "0.2.0"
+  "version": "0.2.1"
 }
 ```
 
@@ -56,7 +56,7 @@ Query the social distance between two pubkeys.
 |------|------|----------|---------|-------------|
 | `from` | string | Yes | - | Source pubkey (64 hex chars) |
 | `to` | string | Yes | - | Target pubkey (64 hex chars) |
-| `max_hops` | integer | No | 5 | Maximum hops to search (1-10) |
+| `max_hops` | integer | No | 3 | Maximum hops to search (1-5) |
 | `include_bridges` | boolean | No | false | Include bridge node pubkeys |
 | `bypass_cache` | boolean | No | false | Skip cache, force fresh computation |
 
@@ -130,7 +130,7 @@ Query distances from one pubkey to multiple targets in a single request.
 |------|------|----------|---------|-------------|
 | `from` | string | Yes | - | Source pubkey (64 hex chars) |
 | `targets` | array | Yes | - | Target pubkeys (max 100) |
-| `max_hops` | integer | No | 5 | Maximum hops to search (1-10) |
+| `max_hops` | integer | No | 3 | Maximum hops to search (1-5) |
 | `include_bridges` | boolean | No | false | Include bridge node pubkeys |
 | `bypass_cache` | boolean | No | false | Skip cache, force fresh computation |
 
@@ -232,7 +232,7 @@ Returns the shortest path between two pubkeys as an array of intermediate pubkey
 |------|------|----------|---------|-------------|
 | `from` | string | Yes | - | Source pubkey (64 hex chars) |
 | `to` | string | Yes | - | Target pubkey (64 hex chars) |
-| `max_hops` | integer | No | 5 | Maximum hops to search (1-10) |
+| `max_hops` | integer | No | 3 | Maximum hops to search (1-5) |
 
 **Example:**
 ```bash

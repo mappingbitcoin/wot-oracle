@@ -1,6 +1,6 @@
 [package]
 name = "wot-oracle"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2021"
 description = "Nostr Web of Trust Oracle - indexes follow graph and provides distance queries"
 license = "MIT"
@@ -20,7 +20,7 @@ rustc-hash = "2"
 moka = { version = "0.12", features = ["sync"] }
 lru = "0.12"
 tower = "0.5"
-tower-http = { version = "0.6", features = ["cors", "limit"] }
+tower-http = { version = "0.6", features = ["cors", "limit", "timeout"] }
 tower_governor = "0.4"
 chrono = { version = "0.4", features = ["serde"] }
 thiserror = "2"

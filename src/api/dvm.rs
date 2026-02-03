@@ -5,7 +5,7 @@ use std::time::Duration;
 use tracing::{info, warn, error, debug};
 
 use crate::cache::{CacheKey, QueryCache};
-use crate::config::Config;
+use crate::config::{Config, MAX_HOPS_LIMIT};
 use crate::graph::{bfs, WotGraph};
 
 const DVM_REQUEST_KIND: u16 = 5950;
@@ -102,7 +102,18 @@ impl DvmService {
             } else if tag_slice.len() >= 3 && tag_slice[0] == "param" {
                 match tag_slice[1].as_str() {
                     "max_hops" => {
-                        max_hops = tag_slice[2].parse().unwrap_or(self.config.max_hops);
+                        // Validate and clamp max_hops to safe range (1-MAX_HOPS_LIMIT)
+                        max_hops = match tag_slice[2].parse::<u8>() {
+                            Ok(h) if (1..=MAX_HOPS_LIMIT).contains(&h) => h,
+                            Ok(h) => {
+                                warn!("DVM request max_hops {} out of range, clamping to {}", h, MAX_HOPS_LIMIT);
+                                h.clamp(1, MAX_HOPS_LIMIT)
+                            }
+                            Err(_) => {
+                                warn!("DVM request invalid max_hops value, using default {}", self.config.max_hops);
+                                self.config.max_hops
+                            }
+                        };
                     }
                     "from" => {
                         if inputs.is_empty() {
@@ -128,15 +139,15 @@ impl DvmService {
             }
         };
 
-        // Validate pubkeys
+        // Validate pubkeys (less verbose error messages)
         if from.len() != 64 || !from.chars().all(|c| c.is_ascii_hexdigit()) {
-            self.send_error(client, request, "Invalid 'from' pubkey format")
+            self.send_error(client, request, "Invalid pubkey format")
                 .await?;
             return Ok(());
         }
 
         if to.len() != 64 || !to.chars().all(|c| c.is_ascii_hexdigit()) {
-            self.send_error(client, request, "Invalid 'to' pubkey format")
+            self.send_error(client, request, "Invalid pubkey format")
                 .await?;
             return Ok(());
         }
@@ -185,13 +196,12 @@ impl DvmService {
             .context("BFS computation task failed")?
         };
 
-        // Build response
+        // Build response (don't echo full request for security)
         let response_content = serde_json::to_string(&result)?;
 
         let mut tags = vec![
             Tag::parse(&["e", &request.id.to_hex()])?,
             Tag::parse(&["p", &request.pubkey.to_hex()])?,
-            Tag::parse(&["request", &serde_json::to_string(&request)?])?,
         ];
 
         // Add result tags

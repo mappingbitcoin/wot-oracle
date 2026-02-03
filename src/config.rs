@@ -1,5 +1,16 @@
 use std::env;
 
+// Security limits
+pub const MAX_HOPS_LIMIT: u8 = 5;
+pub const MAX_HOPS_DEFAULT: u8 = 3;
+pub const CACHE_SIZE_MAX: usize = 100_000;
+pub const CACHE_SIZE_DEFAULT: usize = 10_000;
+pub const RATE_LIMIT_MAX: u32 = 1000;
+pub const RATE_LIMIT_DEFAULT: u32 = 100;
+#[allow(dead_code)] // Reserved for future timeout configuration
+pub const REQUEST_TIMEOUT_SECS: u64 = 30;
+pub const REQUEST_BODY_LIMIT: usize = 1024 * 1024; // 1MB
+
 #[derive(Debug, Clone)]
 pub struct Config {
     pub relays: Vec<String>,
@@ -35,24 +46,32 @@ impl Config {
 
         let dvm_private_key = env::var("DVM_PRIVATE_KEY").ok();
 
+        // Bounded rate limit (1-1000 req/min)
         let rate_limit_per_minute = env::var("RATE_LIMIT_PER_MINUTE")
             .ok()
             .and_then(|r| r.parse().ok())
-            .unwrap_or(100);
+            .map(|r: u32| r.clamp(1, RATE_LIMIT_MAX))
+            .unwrap_or(RATE_LIMIT_DEFAULT);
 
+        // Bounded max_hops (1-5)
         let max_hops = env::var("MAX_HOPS")
             .ok()
             .and_then(|h| h.parse().ok())
-            .unwrap_or(3);
+            .map(|h: u8| h.clamp(1, MAX_HOPS_LIMIT))
+            .unwrap_or(MAX_HOPS_DEFAULT);
 
+        // Bounded cache size (100-100,000)
         let cache_size = env::var("CACHE_SIZE")
             .ok()
             .and_then(|s| s.parse().ok())
-            .unwrap_or(10000);
+            .map(|s: usize| s.clamp(100, CACHE_SIZE_MAX))
+            .unwrap_or(CACHE_SIZE_DEFAULT);
 
+        // Bounded cache TTL (10-3600 seconds)
         let cache_ttl_secs = env::var("CACHE_TTL_SECS")
             .ok()
             .and_then(|s| s.parse().ok())
+            .map(|s: u64| s.clamp(10, 3600))
             .unwrap_or(300);
 
         Self {

@@ -34,7 +34,7 @@ A global follow-graph indexer that answers pairwise distance queries between any
 |-----------|------|----------|---------|-------------|
 | `from` | hex pubkey | Yes | - | The observer/viewer pubkey |
 | `to` | hex pubkey | Yes | - | The target pubkey |
-| `max_hops` | integer | No | 3 | Maximum depth to search (1-10) |
+| `max_hops` | integer | No | 3 | Maximum depth to search (1-5) |
 | `include_bridges` | boolean | No | false | Return intermediate pubkeys |
 | `bypass_cache` | boolean | No | false | Skip cache, force fresh computation |
 
@@ -184,7 +184,7 @@ A global follow-graph indexer that answers pairwise distance queries between any
 ### 3.4 Security
 
 - Per-IP rate limiting: 100 requests/minute (token bucket)
-- Input validation: 64-char hex pubkeys, max_hops 1-10
+- Input validation: 64-char hex pubkeys, max_hops 1-5
 - No sensitive data stored (all data is public kind:3 events)
 
 ---

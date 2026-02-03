@@ -18,8 +18,8 @@ WoT Oracle continuously syncs follow lists (kind:3 events) from Nostr relays and
 
 ```bash
 # Pull and run
-docker pull ghcr.io/nostr-wot/nostr-wot-oracle:0.2.0
-docker run -d -p 8080:8080 -v wot-data:/app/data ghcr.io/nostr-wot/nostr-wot-oracle:0.2.0
+docker pull ghcr.io/nostr-wot/nostr-wot-oracle:0.2.1
+docker run -d -p 8080:8080 -v wot-data:/app/data ghcr.io/nostr-wot/nostr-wot-oracle:0.2.1
 
 # Check health
 curl http://localhost:8080/health

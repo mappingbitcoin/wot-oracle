@@ -8,13 +8,13 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use std::net::SocketAddr;
-use tower::ServiceBuilder;
 use tower_http::cors::{Any, CorsLayer};
+use tower_http::limit::RequestBodyLimitLayer;
 use tower_governor::{GovernorLayer, governor::GovernorConfigBuilder, key_extractor::SmartIpKeyExtractor};
 use tracing::{debug, info};
 
 use crate::cache::{CacheKey, CacheStats, QueryCache};
-use crate::config::Config;
+use crate::config::{Config, MAX_HOPS_DEFAULT, MAX_HOPS_LIMIT, REQUEST_BODY_LIMIT};
 use crate::graph::{bfs, LockMetricsSnapshot, WotGraph};
 
 #[derive(Clone)]
@@ -38,7 +38,7 @@ pub struct DistanceQueryParams {
 }
 
 fn default_max_hops() -> u8 {
-    5
+    MAX_HOPS_DEFAULT
 }
 
 #[derive(Debug, Deserialize)]
@@ -135,17 +135,18 @@ impl IntoResponse for ErrorResponse {
 }
 
 fn validate_pubkey(pubkey: &str) -> Result<(), ErrorResponse> {
+    // Less verbose error messages to avoid leaking validation details
     if pubkey.len() != 64 {
         return Err(ErrorResponse {
-            error: format!("Invalid pubkey length: expected 64, got {}", pubkey.len()),
-            code: "INVALID_PUBKEY_LENGTH".to_string(),
+            error: "Invalid pubkey format".to_string(),
+            code: "INVALID_PUBKEY".to_string(),
         });
     }
 
     if !pubkey.chars().all(|c| c.is_ascii_hexdigit()) {
         return Err(ErrorResponse {
-            error: "Invalid pubkey: must be 64 hex characters".to_string(),
-            code: "INVALID_PUBKEY_FORMAT".to_string(),
+            error: "Invalid pubkey format".to_string(),
+            code: "INVALID_PUBKEY".to_string(),
         });
     }
 
@@ -153,9 +154,9 @@ fn validate_pubkey(pubkey: &str) -> Result<(), ErrorResponse> {
 }
 
 fn validate_max_hops(max_hops: u8) -> Result<(), ErrorResponse> {
-    if !(1..=10).contains(&max_hops) {
+    if !(1..=MAX_HOPS_LIMIT).contains(&max_hops) {
         return Err(ErrorResponse {
-            error: "max_hops must be between 1 and 10".to_string(),
+            error: format!("max_hops must be between 1 and {}", MAX_HOPS_LIMIT),
             code: "INVALID_MAX_HOPS".to_string(),
         });
     }
@@ -413,8 +414,8 @@ pub fn create_router(state: AppState, rate_limit_per_minute: u32) -> Router {
         .unwrap();
 
     info!(
-        "Rate limiter: {} req/sec, burst size {}",
-        per_second, burst_size
+        "Rate limiter: {} req/sec, burst size {}, body limit {}KB",
+        per_second, burst_size, REQUEST_BODY_LIMIT / 1024
     );
 
     Router::new()
@@ -425,7 +426,8 @@ pub fn create_router(state: AppState, rate_limit_per_minute: u32) -> Router {
         .route("/follows", get(get_follows))
         .route("/common-follows", get(get_common_follows))
         .route("/path", get(get_path))
-        .layer(ServiceBuilder::new().layer(cors))
+        .layer(cors)
+        .layer(RequestBodyLimitLayer::new(REQUEST_BODY_LIMIT))
         .layer(GovernorLayer {
             config: Arc::new(governor_conf),
         })
@@ -466,7 +468,7 @@ mod tests {
             .route("/follows", get(get_follows))
             .route("/common-follows", get(get_common_follows))
             .route("/path", get(get_path))
-            .layer(ServiceBuilder::new().layer(cors))
+            .layer(cors)
             .with_state(state)
     }
 
@@ -579,7 +581,7 @@ mod tests {
         // Verify cache was populated
         let from_id = state.graph.get_node_id(from).unwrap();
         let to_id = state.graph.get_node_id(to).unwrap();
-        let cache_key = CacheKey::new(from_id, to_id, 5, false);
+        let cache_key = CacheKey::new(from_id, to_id, MAX_HOPS_DEFAULT, false);
         assert!(state.cache.get(&cache_key, &state.graph).is_some());
 
         // Second request with bypass_cache=true should still succeed
