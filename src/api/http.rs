@@ -42,6 +42,45 @@ fn default_max_hops() -> u8 {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct FollowsQueryParams {
+    pub pubkey: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CommonFollowsQueryParams {
+    pub from: String,
+    pub to: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct PathQueryParams {
+    pub from: String,
+    pub to: String,
+    #[serde(default = "default_max_hops")]
+    pub max_hops: u8,
+}
+
+#[derive(Debug, Serialize)]
+pub struct FollowsResponse {
+    pub pubkey: String,
+    pub follows: Vec<String>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct CommonFollowsResponse {
+    pub from: String,
+    pub to: String,
+    pub common_follows: Vec<String>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct PathResponse {
+    pub from: String,
+    pub to: String,
+    pub path: Option<Vec<String>>,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct BatchDistanceRequest {
     pub from: String,
     pub targets: Vec<String>,
@@ -270,6 +309,72 @@ pub async fn batch_distance(
     }))
 }
 
+pub async fn get_follows(
+    State(state): State<AppState>,
+    Query(params): Query<FollowsQueryParams>,
+) -> Result<Json<FollowsResponse>, ErrorResponse> {
+    validate_pubkey(&params.pubkey)?;
+
+    let follows = state.graph.get_follows(&params.pubkey).unwrap_or_default();
+
+    Ok(Json(FollowsResponse {
+        pubkey: params.pubkey,
+        follows,
+    }))
+}
+
+pub async fn get_common_follows(
+    State(state): State<AppState>,
+    Query(params): Query<CommonFollowsQueryParams>,
+) -> Result<Json<CommonFollowsResponse>, ErrorResponse> {
+    validate_pubkey(&params.from)?;
+    validate_pubkey(&params.to)?;
+
+    let from_follows = state.graph.get_follows(&params.from).unwrap_or_default();
+    let to_follows = state.graph.get_follows(&params.to).unwrap_or_default();
+
+    // Find intersection - both lists are from sorted internal storage
+    let from_set: std::collections::HashSet<_> = from_follows.into_iter().collect();
+    let common_follows: Vec<String> = to_follows
+        .into_iter()
+        .filter(|f| from_set.contains(f))
+        .collect();
+
+    Ok(Json(CommonFollowsResponse {
+        from: params.from,
+        to: params.to,
+        common_follows,
+    }))
+}
+
+pub async fn get_path(
+    State(state): State<AppState>,
+    Query(params): Query<PathQueryParams>,
+) -> Result<Json<PathResponse>, ErrorResponse> {
+    validate_pubkey(&params.from)?;
+    validate_pubkey(&params.to)?;
+    validate_max_hops(params.max_hops)?;
+
+    let graph = state.graph.clone();
+    let query = bfs::PathQuery {
+        from: std::sync::Arc::from(params.from.as_str()),
+        to: std::sync::Arc::from(params.to.as_str()),
+        max_hops: params.max_hops,
+    };
+
+    let result = tokio::task::spawn_blocking(move || {
+        bfs::compute_path(&graph, &query)
+    })
+    .await
+    .map_err(|e| ErrorResponse::internal(e.to_string()))?;
+
+    Ok(Json(PathResponse {
+        from: params.from,
+        to: params.to,
+        path: result.path.map(|p| p.into_iter().map(|s| s.to_string()).collect()),
+    }))
+}
+
 pub async fn get_stats(State(state): State<AppState>) -> Json<StatsResponse> {
     let stats = state.graph.stats();
     let cache_stats = state.cache.stats();
@@ -317,6 +422,9 @@ pub fn create_router(state: AppState, rate_limit_per_minute: u32) -> Router {
         .route("/stats", get(get_stats))
         .route("/distance", get(get_distance))
         .route("/distance/batch", post(batch_distance))
+        .route("/follows", get(get_follows))
+        .route("/common-follows", get(get_common_follows))
+        .route("/path", get(get_path))
         .layer(ServiceBuilder::new().layer(cors))
         .layer(GovernorLayer {
             config: Arc::new(governor_conf),
@@ -355,6 +463,9 @@ mod tests {
             .route("/stats", get(get_stats))
             .route("/distance", get(get_distance))
             .route("/distance/batch", post(batch_distance))
+            .route("/follows", get(get_follows))
+            .route("/common-follows", get(get_common_follows))
+            .route("/path", get(get_path))
             .layer(ServiceBuilder::new().layer(cors))
             .with_state(state)
     }
@@ -482,6 +593,92 @@ mod tests {
             )
             .await
             .unwrap();
+        assert_eq!(response.status(), StatusCode::OK);
+    }
+
+    #[tokio::test]
+    async fn test_follows_endpoint() {
+        let state = create_test_state();
+        let router = create_test_router(state);
+
+        let pubkey = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+
+        let response = router
+            .oneshot(
+                Request::builder()
+                    .uri(format!("/follows?pubkey={}", pubkey))
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::OK);
+    }
+
+    #[tokio::test]
+    async fn test_common_follows_endpoint() {
+        let graph = Arc::new(WotGraph::new());
+
+        // Set up test data where alice and bob both follow carol
+        graph.update_follows(
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            &[
+                "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc".to_string(),
+                "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd".to_string(),
+            ],
+            None,
+            None,
+        );
+        graph.update_follows(
+            "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            &[
+                "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc".to_string(),
+                "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee".to_string(),
+            ],
+            None,
+            None,
+        );
+
+        let config = Arc::new(Config::from_env());
+        let cache = Arc::new(QueryCache::new(config.cache_size, config.cache_ttl_secs));
+        let state = AppState { graph, config, cache };
+        let router = create_test_router(state);
+
+        let from = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+        let to = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+
+        let response = router
+            .oneshot(
+                Request::builder()
+                    .uri(format!("/common-follows?from={}&to={}", from, to))
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::OK);
+    }
+
+    #[tokio::test]
+    async fn test_path_endpoint() {
+        let state = create_test_state();
+        let router = create_test_router(state);
+
+        let from = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+        let to = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+
+        let response = router
+            .oneshot(
+                Request::builder()
+                    .uri(format!("/path?from={}&to={}", from, to))
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+
         assert_eq!(response.status(), StatusCode::OK);
     }
 }

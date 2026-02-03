@@ -14,7 +14,7 @@ Health check endpoint.
 ```json
 {
   "status": "healthy",
-  "version": "0.1.0"
+  "version": "0.2.0"
 }
 ```
 
@@ -162,6 +162,107 @@ curl -X POST http://localhost:8080/distance/batch \
 
 **Error Codes:**
 - `TOO_MANY_TARGETS` - Maximum 100 targets per batch
+
+---
+
+### GET /follows
+
+Returns the list of pubkeys that a given pubkey follows.
+
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `pubkey` | string | Yes | The pubkey to get follows for (64 hex chars) |
+
+**Example:**
+```bash
+curl "http://localhost:8080/follows?pubkey=82341f882b6eabcd2ba7f1ef90aad961cf074af15b9ef44a09f9d2a8fbfbe6a2"
+```
+
+**Response:**
+```json
+{
+  "pubkey": "82341f882b6eabcd2ba7f1ef90aad961cf074af15b9ef44a09f9d2a8fbfbe6a2",
+  "follows": [
+    "3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d",
+    "fa984bd7dbb282f07e16e7ae87b26a2a7b9b90b7246a44771f0cf5ae58018f52"
+  ]
+}
+```
+
+---
+
+### GET /common-follows
+
+Returns the list of pubkeys that both `from` and `to` follow (mutual follows).
+
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `from` | string | Yes | First pubkey (64 hex chars) |
+| `to` | string | Yes | Second pubkey (64 hex chars) |
+
+**Example:**
+```bash
+curl "http://localhost:8080/common-follows?from=82341f...&to=3bf0c6..."
+```
+
+**Response:**
+```json
+{
+  "from": "82341f882b6eabcd2ba7f1ef90aad961cf074af15b9ef44a09f9d2a8fbfbe6a2",
+  "to": "3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d",
+  "common_follows": [
+    "fa984bd7dbb282f07e16e7ae87b26a2a7b9b90b7246a44771f0cf5ae58018f52"
+  ]
+}
+```
+
+---
+
+### GET /path
+
+Returns the shortest path between two pubkeys as an array of intermediate pubkeys.
+
+**Parameters:**
+
+| Name | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `from` | string | Yes | - | Source pubkey (64 hex chars) |
+| `to` | string | Yes | - | Target pubkey (64 hex chars) |
+| `max_hops` | integer | No | 5 | Maximum hops to search (1-10) |
+
+**Example:**
+```bash
+curl "http://localhost:8080/path?from=82341f...&to=3bf0c6..."
+```
+
+**Response:**
+```json
+{
+  "from": "82341f882b6eabcd2ba7f1ef90aad961cf074af15b9ef44a09f9d2a8fbfbe6a2",
+  "to": "3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d",
+  "path": [
+    "fa984bd7dbb282f07e16e7ae87b26a2a7b9b90b7246a44771f0cf5ae58018f52"
+  ]
+}
+```
+
+**Response Fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `from` | string | Source pubkey |
+| `to` | string | Target pubkey |
+| `path` | array or null | Array of intermediate pubkeys (empty if direct follow, null if not reachable) |
+
+**Note:** The path array contains only the intermediate nodes. For example:
+- If `from` directly follows `to`, path is `[]` (empty array)
+- If the path is `from -> A -> to`, path is `["A"]`
+- If the path is `from -> A -> B -> to`, path is `["A", "B"]`
+- If no path exists within `max_hops`, path is `null`
 
 ---
 

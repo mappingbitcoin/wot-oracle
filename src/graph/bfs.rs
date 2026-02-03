@@ -100,6 +100,20 @@ impl DistanceResult {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct PathQuery {
+    pub from: Arc<str>,
+    pub to: Arc<str>,
+    pub max_hops: u8,
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct PathResult {
+    pub from: Arc<str>,
+    pub to: Arc<str>,
+    pub path: Option<Vec<Arc<str>>>,
+}
+
 pub fn compute_distance(graph: &WotGraph, query: &DistanceQuery) -> DistanceResult {
     // Handle same node case
     if query.from == query.to {
@@ -351,6 +365,174 @@ fn bidirectional_bfs(
         }
         Some(_) | None => DistanceResult::not_found(from_arc, to_arc),
     }
+}
+
+/// Compute the shortest path between two nodes, returning the actual path
+pub fn compute_path(graph: &WotGraph, query: &PathQuery) -> PathResult {
+    // Handle same node case
+    if query.from == query.to {
+        let pubkey_arc = graph.get_pubkey_arc_by_str(&query.from)
+            .unwrap_or_else(|| Arc::clone(&query.from));
+        return PathResult {
+            from: Arc::clone(&pubkey_arc),
+            to: pubkey_arc,
+            path: Some(vec![]),
+        };
+    }
+
+    // Get node IDs and Arc<str> references
+    let (from_id, from_arc) = match graph.get_node_id_and_arc(&query.from) {
+        Some(pair) => pair,
+        None => return PathResult {
+            from: Arc::clone(&query.from),
+            to: Arc::clone(&query.to),
+            path: None,
+        },
+    };
+
+    let (to_id, to_arc) = match graph.get_node_id_and_arc(&query.to) {
+        Some(pair) => pair,
+        None => return PathResult {
+            from: Arc::clone(&from_arc),
+            to: Arc::clone(&query.to),
+            path: None,
+        },
+    };
+
+    // Single read lock for entire BFS traversal
+    graph.with_adjacency(|follows, followers| {
+        // Direct follow check via binary search on sorted list
+        let is_direct = |from: u32, to: u32| -> bool {
+            follows
+                .get(from as usize)
+                .map(|list| list.binary_search(&to).is_ok())
+                .unwrap_or(false)
+        };
+
+        // Check for direct follow (hops = 1)
+        if is_direct(from_id, to_id) {
+            return PathResult {
+                from: Arc::clone(&from_arc),
+                to: Arc::clone(&to_arc),
+                path: Some(vec![]),
+            };
+        }
+
+        // BFS with parent tracking for path reconstruction
+        let mut fwd_parent: FxHashMap<u32, u32> = FxHashMap::default();
+        let mut bwd_parent: FxHashMap<u32, u32> = FxHashMap::default();
+        let mut fwd_visited: FxHashSet<u32> = FxHashSet::default();
+        let mut bwd_visited: FxHashSet<u32> = FxHashSet::default();
+        let mut fwd_current: Vec<u32> = vec![from_id];
+        let mut bwd_current: Vec<u32> = vec![to_id];
+        let mut fwd_next: Vec<u32> = Vec::new();
+        let mut bwd_next: Vec<u32> = Vec::new();
+
+        fwd_visited.insert(from_id);
+        bwd_visited.insert(to_id);
+
+        let mut meeting_node: Option<u32> = None;
+        let mut fwd_dist = 0u32;
+        let mut bwd_dist = 0u32;
+
+        'outer: while !fwd_current.is_empty() || !bwd_current.is_empty() {
+            let current_min_possible = fwd_dist + bwd_dist;
+            if current_min_possible as u8 > query.max_hops {
+                break;
+            }
+
+            // Expand smaller frontier
+            let expand_forward = if fwd_current.is_empty() {
+                false
+            } else if bwd_current.is_empty() {
+                true
+            } else {
+                fwd_current.len() <= bwd_current.len()
+            };
+
+            if expand_forward {
+                fwd_dist += 1;
+                for &node in &fwd_current {
+                    for &neighbor in &follows[node as usize] {
+                        if bwd_visited.contains(&neighbor) {
+                            fwd_parent.insert(neighbor, node);
+                            meeting_node = Some(neighbor);
+                            break 'outer;
+                        }
+                        if !fwd_visited.contains(&neighbor) {
+                            fwd_visited.insert(neighbor);
+                            fwd_parent.insert(neighbor, node);
+                            fwd_next.push(neighbor);
+                        }
+                    }
+                }
+                fwd_current.clear();
+                std::mem::swap(&mut fwd_current, &mut fwd_next);
+            } else {
+                bwd_dist += 1;
+                for &node in &bwd_current {
+                    for &neighbor in &followers[node as usize] {
+                        if fwd_visited.contains(&neighbor) {
+                            bwd_parent.insert(neighbor, node);
+                            meeting_node = Some(neighbor);
+                            break 'outer;
+                        }
+                        if !bwd_visited.contains(&neighbor) {
+                            bwd_visited.insert(neighbor);
+                            bwd_parent.insert(neighbor, node);
+                            bwd_next.push(neighbor);
+                        }
+                    }
+                }
+                bwd_current.clear();
+                std::mem::swap(&mut bwd_current, &mut bwd_next);
+            }
+        }
+
+        match meeting_node {
+            Some(meet) => {
+                // Reconstruct path from from_id to meeting point
+                let mut path_ids: Vec<u32> = Vec::new();
+                let mut current = meet;
+                while current != from_id {
+                    if let Some(&parent) = fwd_parent.get(&current) {
+                        path_ids.push(current);
+                        current = parent;
+                    } else {
+                        break;
+                    }
+                }
+                path_ids.reverse();
+
+                // Reconstruct path from meeting point to to_id
+                current = meet;
+                while current != to_id {
+                    if let Some(&child) = bwd_parent.get(&current) {
+                        if child != to_id {
+                            path_ids.push(child);
+                        }
+                        current = child;
+                    } else {
+                        break;
+                    }
+                }
+
+                // Convert IDs to pubkeys
+                let path = graph.resolve_pubkeys_arc(&path_ids);
+
+                PathResult {
+                    from: from_arc,
+                    to: to_arc,
+                    path: Some(path),
+                }
+            }
+            None => PathResult {
+                from: from_arc,
+                to: to_arc,
+                path: None,
+            },
+        }
+    })
 }
 
 #[cfg(test)]
